@@ -5,7 +5,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import CircularProgress from '@mui/material/CircularProgress';
 import { Alert, Button, Input, InputLabel, Paper } from '@mui/material';
 import { Container } from '@mui/system';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 
 const Register = () => {
@@ -13,7 +13,7 @@ const Register = () => {
     const [password, setPassword] = useState('')
     const [error, setError] = useState(null)
     const history = useNavigate()
-    const { signUp, loading, setSigned} = useContext(AuthContext)
+    const { signUp, loading } = useContext(AuthContext)
 
     async function handleSubmit(e) {
         setError(null)

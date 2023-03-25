@@ -121,7 +121,7 @@ function AuthProvider ({children}) {
 
     const signUp = async(username, password) => {
         try {
-            const register = await doRegister(username, password)
+            await doRegister(username, password)
             return true            
         } catch (error) {
             console.error(error)
