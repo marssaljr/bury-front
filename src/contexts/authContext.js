@@ -1,16 +1,16 @@
-import {createContext, useState, useEffect} from 'react';
+import { createContext, useState, useEffect } from 'react';
 import Cookies from "js-cookie";
-import { toast } from 'react-toastify';
-import rest from '../utils/rest';
+import { doSignIn, doSignUp, getNewToken, getUserInfo } from '../utils/rest';
 
 
 export const AuthContext = createContext();
 
-function AuthProvider ({children}) {
+function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState(null);
     const [signed, setSigned] = useState(false);
+    const [account, setAccount] = useState(null);
 
     const parseToken = (token) => {
         return JSON.parse(atob(token.split('.')[1]));
@@ -20,7 +20,7 @@ function AuthProvider ({children}) {
         const decoded = parseToken(token);
         return decoded.exp < Math.floor(Date.now() / 1000);
     }
-    
+
 
     useEffect(() => {
         const getUserFromCookie = () => {
@@ -34,12 +34,12 @@ function AuthProvider ({children}) {
                         if (isTokenExpierd(refresh)) {
                             Cookies.remove("refresh")
                         } else {
-                            rest.getNewToken(refresh)                        
+                            getNewToken(refresh)
                         }
                     }
-                    logged = false                    
+                    logged = false
                 }
-                logged = true                
+                logged = true
             }
             setSigned(logged)
             return
@@ -48,58 +48,10 @@ function AuthProvider ({children}) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
-    const doGetToken = async (username, password) => {
-        let response = {
-            "detail": ""
-        }
-        try {
-        const request = await fetch("http://localhost:8000/api/token/", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                username,
-                password
-            })
-        })
-        response = await request.json()
-        toast(response.detail)
-        return response
-        } catch (error) {
-            console.error(error)
-            toast('Ocorreu um erro no login')
-        } 
-    }
 
-    const doRegister = async (username, password) => {
-        let response = {
-            "detail": ""
-        }
+    const signIn = async (username, password) => {
         try {
-        const request = await fetch("http://localhost:8000/api/manage_user/", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                username,
-                password
-            })
-        })
-        response = await request.json()
-        toast(response.detail)
-        return response
-        } catch (error) {
-            console.error(error.detail? error.detail: 'Ocorreu um erro no registro')
-            toast(error.detail? error.detail: 'Ocorreu um erro no registro')
-        } 
-    }
-
-
-    const signIn = async(username, password) => {
-        try {
-            const token = await doGetToken(username, password)
+            const token = await doSignIn(username, password)
             if (token.access && token.refresh) {
                 setUser(token.access)
                 Cookies.set("session", token.access, { expires: 14 })
@@ -112,33 +64,48 @@ function AuthProvider ({children}) {
             }
         } catch (error) {
             console.error(error)
-            toast('Ocorreu um erro no login')
             return false
         } finally {
             setLoading(false)
-        }            
+        }
     }
 
-    const signUp = async(username, password) => {
+    const signUp = async (username, email, password, first_name, last_name) => {
         try {
-            await doRegister(username, password)
-            return true            
+            await doSignUp(username, email, password, first_name, last_name)
+            return true
         } catch (error) {
             console.error(error)
-            toast(error)
             return false
         } finally {
             setLoading(false)
-        }            
+        }
     }
+
+    const getUser = async () => {
+        try {
+            setLoading(true)
+            const response = await getUserInfo()
+            setUser(response.user)
+            setAccount(response)
+            return true
+        } catch (error) {
+            console.error(error)
+            return false
+        } finally {
+            setLoading(false)
+        }
+    }
+
 
     return (
         <AuthContext.Provider value={{
-            signed, user, setUser, loading, signIn, signUp, message, setMessage, setSigned}}>
+            signed, user, setUser, getUser, loading, signIn, signUp, message, setMessage, setSigned, account
+        }}>
             {children}
         </AuthContext.Provider>
     )
-   
+
 }
 
 export default AuthProvider
