@@ -1,7 +1,7 @@
 /* eslint-disable */
 import Cookies from "js-cookie";
 import { toast } from 'react-toastify';
-const host = "http://192.168.1.6:8000"
+const host = process.env.REACT_APP_BASE_URL;
 
 const getUserInfo = async () => {
     try {
